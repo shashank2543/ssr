@@ -1,12 +1,20 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import Home from "./pages/Home";
 import Routes from "./Routes";
 import { BrowserRouter } from "react-router-dom";
+import { createStore, applyMiddleware } from "redux";
+import thunk from "redux-thunk";
+import { Provider } from "react-redux";
+import reducers from "./reducers";
+import "babel-polyfill";
+
+const store = createStore(reducers, {}, applyMiddleware(thunk));
 
 ReactDOM.hydrate(
-  <BrowserRouter>
-    <Routes />
-  </BrowserRouter>,
+  <Provider store={store}>
+    <BrowserRouter>
+      <Routes />
+    </BrowserRouter>
+  </Provider>,
   document.querySelector("#root")
 );
