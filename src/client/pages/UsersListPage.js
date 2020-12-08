@@ -24,8 +24,4 @@ const mapStateToProps = (reduxState) => {
   return { users: reduxState.users };
 };
 
-const loadData = (store) => {
-  return store.dispatch(fetchUsers());
-};
-
 export default connect(mapStateToProps, { fetchUsers })(UsersListPage);
