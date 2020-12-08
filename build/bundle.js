@@ -166,9 +166,15 @@ var _renderer = __webpack_require__(9);
 
 var _renderer2 = _interopRequireDefault(_renderer);
 
-var _createStore = __webpack_require__(14);
+var _createStore = __webpack_require__(15);
 
 var _createStore2 = _interopRequireDefault(_createStore);
+
+var _reactRouterConfig = __webpack_require__(14);
+
+var _Routes = __webpack_require__(11);
+
+var _Routes2 = _interopRequireDefault(_Routes);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -176,8 +182,17 @@ var app = (0, _express2.default)();
 app.use(_express2.default.static("public"));
 app.get("*", function (req, res) {
   var store = (0, _createStore2.default)();
+
+  // console.log(matchRoutes(Routes, req.path));
+  var promises = (0, _reactRouterConfig.matchRoutes)(_Routes2.default, req.path).map(function (_ref) {
+    var route = _ref.route;
+
+    return route.loadData ? route.loadData(store) : null;
+  });
   // Logic initialize and load data into the store
-  res.send((0, _renderer2.default)(req, store));
+  Promise.all(promises).then(function () {
+    res.send((0, _renderer2.default)(req, store));
+  });
 });
 
 app.listen(3000, function () {
@@ -221,6 +236,12 @@ var _Routes2 = _interopRequireDefault(_Routes);
 
 var _reactRedux = __webpack_require__(2);
 
+var _serializeJavascript = __webpack_require__(19);
+
+var _serializeJavascript2 = _interopRequireDefault(_serializeJavascript);
+
+var _reactRouterConfig = __webpack_require__(14);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.default = function (req, store) {
@@ -230,11 +251,15 @@ exports.default = function (req, store) {
     _react2.default.createElement(
       _reactRouterDom.StaticRouter,
       { context: {}, location: req.url },
-      _react2.default.createElement(_Routes2.default, null)
+      _react2.default.createElement(
+        "div",
+        null,
+        (0, _reactRouterConfig.renderRoutes)(_Routes2.default)
+      )
     )
   ));
 
-  return "\n    <html>\n    <head></head>\n    <body>\n    <div id=\"root\">" + content + "</div>\n    <script src=\"bundle.js\"></script>\n    </body>\n    </html>\n    ";
+  return "\n    <html>\n    <head></head>\n    <body>\n    <div id=\"root\">" + content + "</div>\n    <script>\n    window.INITIAL_STATE = " + (0, _serializeJavascript2.default)(store.getState()) + ";\n  </script>\n    <script src=\"bundle.js\"></script>\n    </body>\n    </html>\n    ";
 };
 
 /***/ }),
@@ -251,8 +276,10 @@ module.exports = require("react-dom/server");
 
 
 Object.defineProperty(exports, "__esModule", {
-    value: true
+  value: true
 });
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _react = __webpack_require__(0);
 
@@ -270,14 +297,21 @@ var _UsersListPage2 = _interopRequireDefault(_UsersListPage);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.default = function () {
-    return _react2.default.createElement(
-        'div',
-        null,
-        _react2.default.createElement(_reactRouterDom.Route, { exact: true, path: '/', component: _Home2.default }),
-        _react2.default.createElement(_reactRouterDom.Route, { exact: true, path: '/users', component: _UsersListPage2.default })
-    );
-};
+// export default () => {
+//     return(
+//         <div>
+//             <Route exact path='/' component={Home}/>
+//             <Route exact path='/users' component={UsersListPage}/>
+//         </div>
+//     )
+// }
+
+exports.default = [_extends({}, _Home2.default, {
+  path: "/",
+  exact: true
+}), _extends({
+  path: "/users"
+}, _UsersListPage2.default)];
 
 /***/ }),
 /* 12 */
@@ -317,7 +351,14 @@ var Home = function Home() {
   );
 };
 
-exports.default = Home;
+var loadData = function loadData(store) {
+  console.log("here");
+};
+
+exports.default = {
+  loadData: loadData,
+  component: Home
+};
 
 /***/ }),
 /* 13 */
@@ -347,10 +388,11 @@ var UsersListPage = exports.UsersListPage = function UsersListPage(props) {
       users = _props$users === undefined ? [] : _props$users;
 
   (0, _react.useEffect)(function () {
-    fetchUsers();
+    if (users.length == 0) {
+      fetchUsers();
+    }
   }, []);
   var renderUsers = function renderUsers(users) {
-    console.log(users);
     return users.map(function (user) {
       return _react2.default.createElement(
         "li",
@@ -383,10 +425,19 @@ var loadData = function loadData(store) {
   return store.dispatch((0, _actions.fetchUsers)());
 };
 
-exports.default = (0, _reactRedux.connect)(mapStateToProps, { fetchUsers: _actions.fetchUsers })(UsersListPage);
+exports.default = {
+  loadData: loadData,
+  component: (0, _reactRedux.connect)(mapStateToProps, { fetchUsers: _actions.fetchUsers })(UsersListPage)
+};
 
 /***/ }),
 /* 14 */
+/***/ (function(module, exports) {
+
+module.exports = require("react-router-config");
+
+/***/ }),
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -398,11 +449,11 @@ Object.defineProperty(exports, "__esModule", {
 
 var _redux = __webpack_require__(5);
 
-var _reduxThunk = __webpack_require__(15);
+var _reduxThunk = __webpack_require__(16);
 
 var _reduxThunk2 = _interopRequireDefault(_reduxThunk);
 
-var _reducers = __webpack_require__(16);
+var _reducers = __webpack_require__(17);
 
 var _reducers2 = _interopRequireDefault(_reducers);
 
@@ -419,13 +470,13 @@ exports.default = function (req) {
 };
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports) {
 
 module.exports = require("redux-thunk");
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -437,7 +488,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _redux = __webpack_require__(5);
 
-var _usersReducer = __webpack_require__(17);
+var _usersReducer = __webpack_require__(18);
 
 var _usersReducer2 = _interopRequireDefault(_usersReducer);
 
@@ -448,7 +499,7 @@ exports.default = (0, _redux.combineReducers)({
 });
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -471,6 +522,12 @@ exports.default = function () {
             return state;
     }
 };
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports) {
+
+module.exports = require("serialize-javascript");
 
 /***/ })
 /******/ ]);

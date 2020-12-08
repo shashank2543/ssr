@@ -13,4 +13,12 @@ const Home = () => {
   );
 };
 
-export default Home;
+const loadData = (store) => {
+  console.log("here");
+};
+
+export default {
+  loadData,
+  component: Home
+};
+
